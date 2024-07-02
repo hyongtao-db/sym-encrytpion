@@ -1,7 +1,5 @@
 package main
 
-import "C"
-
 import (
 	"bytes"
 	"crypto/aes"
@@ -49,7 +47,6 @@ func (kt *KeyText) GetText() string {
 }
 
 // Encrypt encrypts the text to ciphertext using key, if key is empty, a default key is used.
-// export Encrypt
 func Encrypt(kt *KeyText) (ciphertext string, err error) {
 	// padding
 	var textBytes = pkcs7Padding([]byte(kt.GetText()), aes.BlockSize)
@@ -67,7 +64,6 @@ func Encrypt(kt *KeyText) (ciphertext string, err error) {
 }
 
 // Decrypt decrypts the ciphertext to text using key, if key is empty, a default key is used.
-// export Decrypt
 func Decrypt(kt *KeyText) (text string, err error) {
 	var keyBytes = []byte(kt.GetKey())
 	var ciphertextBytes []byte
@@ -116,6 +112,7 @@ func newBlock(key []byte) (block cipher.Block, err error) {
 		key256 = sha256.Sum256(key)
 	}
 	key = key256[:]
+	fmt.Printf("newBlock key = %v\n", key)
 	block, err = aes.NewCipher(key)
 	return
 }
@@ -125,7 +122,6 @@ func newBlock(key []byte) (block cipher.Block, err error) {
 func pkcs7Padding(text []byte, blockSize int) []byte {
 	padding := blockSize - len(text)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	// padtext := bytes.Repeat([]byte{byte(0)}, padding)
 	return append(text, padtext...)
 }
 
@@ -157,11 +153,18 @@ func main() {
 	// 0x99, 0x74, 0x1C, 0x77, 0xC3, 0x4A, 0x68, 0xF9, 0x0D, 0x72, 0x76, 0xDA, 0x38, 0xAC, 0x33, 0xF7
 
 	text := "helloworld"
+	// [104 121 116 107 101 121]
+	// 0x [68 79 74 6B 65 79]
+	mykey := "hytkey"
 	fmt.Printf("original text = %v\n", text)
-	kt := NewKeyText("hytkey", text)
+	kt := NewKeyText(mykey, text)
+
+	fmt.Printf("\n Start to encrypt \n")
 	ciphertext, _ := Encrypt(kt)
 	fmt.Printf("ciphertext = %v\n", ciphertext)
-	kt = NewKeyText("hytkey", ciphertext)
+	kt = NewKeyText(mykey, ciphertext)
+
+	fmt.Printf("\n Start to decrypt \n")
 	text1, _ := Decrypt(kt)
 	fmt.Printf("decrypted text1 = %v\n", text1)
 }
