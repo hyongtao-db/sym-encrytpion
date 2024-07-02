@@ -5,7 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
-	"encoding/base32"
+	"encoding/base64"
 	"errors"
 	"fmt"
 )
@@ -14,7 +14,7 @@ var (
 	aesKey256          [32]byte
 	aesIV              []byte
 	errUnpaddingFailed = errors.New("decrypt failed, perhaps you are using different keys to encrypt and decrypt")
-	baseEncoder        = base32.StdEncoding.WithPadding(base32.NoPadding)
+	baseEncoder        = base64.StdEncoding.WithPadding(base64.NoPadding)
 )
 
 const (
@@ -59,7 +59,7 @@ func Encrypt(kt *KeyText) (ciphertext string, err error) {
 		return
 	}
 	fmt.Printf("ciphertext Bytes = %v\n", ciphertextBytes)
-	ciphertext = base32Encode(ciphertextBytes) // base32 encode
+	ciphertext = base64Encode(ciphertextBytes) // base64 encode
 	return
 }
 
@@ -67,8 +67,8 @@ func Encrypt(kt *KeyText) (ciphertext string, err error) {
 func Decrypt(kt *KeyText) (text string, err error) {
 	var keyBytes = []byte(kt.GetKey())
 	var ciphertextBytes []byte
-	// base32 decode
-	if ciphertextBytes, err = base32Decode(kt.GetText()); nil != err {
+	// base64 decode
+	if ciphertextBytes, err = base64Decode(kt.GetText()); nil != err {
 		return
 	}
 	// decrypt
@@ -136,11 +136,11 @@ func pkcs7Unpadding(text []byte) ([]byte, error) {
 	return text[:rest], nil
 }
 
-func base32Encode(data []byte) string {
+func base64Encode(data []byte) string {
 	return baseEncoder.EncodeToString(data)
 }
 
-func base32Decode(s string) ([]byte, error) {
+func base64Decode(s string) ([]byte, error) {
 	return baseEncoder.DecodeString(s)
 }
 
@@ -151,10 +151,11 @@ func main() {
 	fmt.Printf("aesIV = %d\n", aesIV)
 	// [153  116   28    119   195   74    104   249   13    114   118   218   56    172   51    247]
 	// 0x99, 0x74, 0x1C, 0x77, 0xC3, 0x4A, 0x68, 0xF9, 0x0D, 0x72, 0x76, 0xDA, 0x38, 0xAC, 0x33, 0xF7
+	// 99741C77C34A68F90D7276DA38AC33F7
 
 	text := "helloworld"
 	// [104 121 116 107 101 121]
-	// 0x [68 79 74 6B 65 79]
+	// 0x [68 79 74 6B 65 79] 6879746B6579
 	mykey := "hytkey"
 	fmt.Printf("original text = %v\n", text)
 	kt := NewKeyText(mykey, text)
